@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lay2web — layout mockup board</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Top toolbar -->
+  <header class="toolbar">
+    <div class="toolbar__group">
+      <span class="logo">lay2web</span>
+    </div>
+
+    <div class="toolbar__group">
+      <button class="btn" id="btn-add-image" title="Add image block (I)">+ Image</button>
+      <button class="btn" id="btn-add-text" title="Add text block (T)">+ Text</button>
+      <button class="btn" id="btn-presets" title="Open preset layouts (P)">Presets</button>
+    </div>
+
+    <div class="toolbar__group">
+      <div class="segmented" id="device-switch">
+        <button class="segmented__item is-active" data-device="desktop" title="Desktop canvas (1440px)">Desktop</button>
+        <button class="segmented__item" data-device="mobile" title="Mobile canvas (390px)">Mobile</button>
+      </div>
+    </div>
+
+    <div class="toolbar__group">
+      <label class="field field--inline" title="Number of columns for auto layout">
+        <span>Cols</span>
+        <input type="number" id="auto-cols" min="1" max="12" value="3" />
+      </label>
+      <label class="field field--inline" title="Gap between blocks in px">
+        <span>Gap</span>
+        <input type="number" id="auto-gap" min="0" max="200" value="24" />
+      </label>
+      <button class="btn btn--accent" id="btn-auto-layout" title="Arrange selected blocks (or all) into a grid (A)">Auto layout</button>
+    </div>
+
+    <div class="toolbar__group">
+      <button class="btn btn--icon" id="btn-undo" title="Undo (Ctrl+Z)">↶</button>
+      <button class="btn btn--icon" id="btn-redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+      <button class="btn btn--icon" id="btn-zoom-out" title="Zoom out (Ctrl+-)">−</button>
+      <span class="zoom-label" id="zoom-label">100%</span>
+      <button class="btn btn--icon" id="btn-zoom-in" title="Zoom in (Ctrl++)">+</button>
+      <button class="btn btn--icon" id="btn-zoom-fit" title="Fit to width">Fit</button>
+    </div>
+
+    <div class="toolbar__group toolbar__group--right">
+      <button class="btn" id="btn-save" title="Download layout as JSON">Save</button>
+      <button class="btn" id="btn-load" title="Load layout from JSON">Load</button>
+      <input type="file" id="file-input" accept="application/json" hidden />
+      <button class="btn" id="btn-export-html" title="Export as static HTML/CSS">Export HTML</button>
+      <button class="btn" id="btn-export-png" title="Export as PNG">Export PNG</button>
+      <button class="btn btn--danger" id="btn-clear" title="Clear current canvas">Clear</button>
+    </div>
+  </header>
+
+  <div class="workspace">
+    <!-- Presets side panel -->
+    <aside class="panel panel--presets" id="presets-panel">
+      <div class="panel__header">
+        <span>Presets</span>
+        <button class="btn btn--icon" id="btn-close-presets" title="Close">×</button>
+      </div>
+      <p class="panel__hint">Click a preset to append it below the current content.</p>
+      <div class="presets-list" id="presets-list"></div>
+    </aside>
+
+    <!-- Scrollable viewport with canvas -->
+    <main class="viewport" id="viewport">
+      <div class="world" id="world">
+        <div class="canvas" id="canvas">
+          <div class="blocks" id="blocks"></div>
+          <div class="guides" id="guides"></div>
+          <div class="marquee" id="marquee" hidden></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Properties side panel -->
+    <aside class="panel panel--props" id="props-panel">
+      <div class="panel__header"><span>Properties</span></div>
+
+      <div class="props-empty" id="props-empty">
+        <p>Nothing selected.</p>
+        <p class="panel__hint">
+          Click a block to select. Shift+click for multi-select.
+          Drag on empty canvas for marquee selection.
+          Double-click a text block to edit.
+        </p>
+        <div class="shortcuts">
+          <div><kbd>I</kbd> image block</div>
+          <div><kbd>T</kbd> text block</div>
+          <div><kbd>P</kbd> presets</div>
+          <div><kbd>A</kbd> auto layout</div>
+          <div><kbd>Ctrl</kbd>+<kbd>D</kbd> duplicate</div>
+          <div><kbd>Ctrl</kbd>+<kbd>C</kbd>/<kbd>V</kbd> copy / paste</div>
+          <div><kbd>Ctrl</kbd>+<kbd>Z</kbd> undo</div>
+          <div><kbd>Del</kbd> delete</div>
+          <div><kbd>L</kbd> lock / unlock</div>
+          <div><kbd>Arrows</kbd> nudge (Shift ×10)</div>
+          <div><kbd>Ctrl</kbd>+wheel zoom</div>
+        </div>
+      </div>
+
+      <div class="props" id="props" hidden>
+        <div class="props__title" id="props-title">Image block</div>
+
+        <div class="props__row">
+          <label class="field"><span>X</span><input type="number" id="prop-x" /></label>
+          <label class="field"><span>Y</span><input type="number" id="prop-y" /></label>
+        </div>
+        <div class="props__row">
+          <label class="field"><span>W</span><input type="number" id="prop-w" min="10" /></label>
+          <label class="field"><span>H</span><input type="number" id="prop-h" min="10" /></label>
+        </div>
+
+        <div class="props__section" id="props-image">
+          <label class="check">
+            <input type="checkbox" id="prop-lock-ratio" />
+            <span>Lock aspect ratio</span>
+          </label>
+          <div class="props__label">Aspect ratio</div>
+          <div class="ratio-grid" id="ratio-grid"></div>
+          <label class="field"><span>Label</span><input type="text" id="prop-label" placeholder="auto" /></label>
+        </div>
+
+        <div class="props__section" id="props-text" hidden>
+          <label class="field"><span>Text</span><textarea id="prop-text" rows="4"></textarea></label>
+          <div class="props__row">
+            <label class="field"><span>Size</span><input type="number" id="prop-font-size" min="8" max="200" /></label>
+            <label class="field"><span>Align</span>
+              <select id="prop-align">
+                <option value="left">Left</option>
+                <option value="center">Center</option>
+                <option value="right">Right</option>
+              </select>
+            </label>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="prop-bold" />
+            <span>Bold</span>
+          </label>
+        </div>
+
+        <div class="props__section">
+          <label class="check">
+            <input type="checkbox" id="prop-locked" />
+            <span>Locked (fixed in place)</span>
+          </label>
+        </div>
+
+        <div class="props__section props__actions">
+          <button class="btn" id="btn-duplicate">Duplicate</button>
+          <button class="btn" id="btn-bring-front">To front</button>
+          <button class="btn" id="btn-send-back">To back</button>
+          <button class="btn btn--danger" id="btn-delete">Delete</button>
+        </div>
+
+        <div class="props__section" id="props-align" hidden>
+          <div class="props__label">Align selection</div>
+          <div class="props__row props__row--wrap">
+            <button class="btn btn--small" data-align="left">Left</button>
+            <button class="btn btn--small" data-align="hcenter">H‑center</button>
+            <button class="btn btn--small" data-align="right">Right</button>
+            <button class="btn btn--small" data-align="top">Top</button>
+            <button class="btn btn--small" data-align="vcenter">V‑center</button>
+            <button class="btn btn--small" data-align="bottom">Bottom</button>
+            <button class="btn btn--small" data-align="same-width">Same W</button>
+            <button class="btn btn--small" data-align="same-height">Same H</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="statusbar">
+    <span id="status-canvas">Desktop · 1440px</span>
+    <span id="status-selection">0 selected</span>
+    <span id="status-cursor"></span>
+    <span class="statusbar__right">Autosaved to this browser</span>
+  </footer>
+
+  <script src="js/utils.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/presets.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/export.js"></script>
+  <script src="js/canvas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
