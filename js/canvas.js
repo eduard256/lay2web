@@ -14,6 +14,7 @@ const Canvas = (() => {
   const blocksLayer = document.getElementById("blocks");
   const guidesLayer = document.getElementById("guides");
   const marqueeEl = document.getElementById("marquee");
+  const foldLine = document.getElementById("fold");
 
   const elements = new Map(); // block id -> element
   let spaceHeld = false;
@@ -26,7 +27,11 @@ const Canvas = (() => {
     const { zoom, selection } = State.state;
     const blocks = State.currentBlocks();
     const canvasW = State.canvasWidth();
-    const canvasH = Math.max(viewport.clientHeight / zoom, State.contentBottom() + EXTRA_BOTTOM);
+    // at least one screen (16:9 desktop / 9:16 mobile), then grows with content like a real page
+    const screenH = State.screenHeight();
+    const canvasH = Math.max(screenH, State.contentBottom() + EXTRA_BOTTOM);
+    foldLine.style.top = screenH + "px";
+    foldLine.querySelector(".fold__label").textContent = `First screen · ${canvasW} × ${screenH}`;
 
     canvas.style.width = canvasW + "px";
     canvas.style.height = canvasH + "px";
@@ -150,9 +155,12 @@ const Canvas = (() => {
   }
 
   function zoomToFit() {
-    const available = viewport.clientWidth - WORLD_PADDING * 2 - 40;
-    setZoom(available / State.canvasWidth());
+    // fit the whole first screen (width and height) into the viewport
+    const availW = viewport.clientWidth - WORLD_PADDING * 2 - 40;
+    const availH = viewport.clientHeight - WORLD_PADDING * 2 - 40;
+    setZoom(Math.min(availW / State.canvasWidth(), availH / State.screenHeight()));
     viewport.scrollLeft = 0;
+    viewport.scrollTop = 0;
   }
 
   /* ---------- pointer interactions ---------- */

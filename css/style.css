@@ -237,6 +237,30 @@ button, input, select, textarea {
 }
 
 .blocks, .guides { position: absolute; inset: 0; }
+
+/* dashed line marking the bottom of the first screen (16:9 desktop, 9:16 mobile) */
+.fold {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed rgba(79, 140, 255, 0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+.fold__label {
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: scale(var(--hs, 1));
+  transform-origin: top right;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: #fff;
+  background: rgba(79, 140, 255, 0.85);
+  border-radius: 0 0 0 4px;
+  white-space: nowrap;
+}
 .guides { pointer-events: none; overflow: visible; }
 
 .guide {

@@ -4,8 +4,9 @@
  */
 const State = (() => {
   const DEVICES = {
-    desktop: { width: 1440, label: "Desktop" },
-    mobile: { width: 390, label: "Mobile" },
+    // screenRatio = width / height of one visible screen (the "fold")
+    desktop: { width: 1440, screenRatio: 16 / 9, label: "Desktop" },
+    mobile: { width: 390, screenRatio: 9 / 16, label: "Mobile" },
   };
 
   const STORAGE_KEY = "lay2web:v1";
@@ -38,6 +39,12 @@ const State = (() => {
 
   function canvasWidth() {
     return DEVICES[state.device].width;
+  }
+
+  /** Height of one screen: 16:9 on desktop, 9:16 on mobile. */
+  function screenHeight() {
+    const d = DEVICES[state.device];
+    return Math.round(d.width / d.screenRatio);
   }
 
   function getBlock(id) {
@@ -278,6 +285,7 @@ const State = (() => {
     round,
     currentBlocks,
     canvasWidth,
+    screenHeight,
     getBlock,
     selectedBlocks,
     contentBottom,
